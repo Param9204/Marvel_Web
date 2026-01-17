@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fetchCategories, fetchProducts } from "@/lib/api";
 import { exportElementAsPdf } from "@/lib/exportUtils";
 import {
   Eye,
@@ -91,35 +92,34 @@ export default function ProductsPage() {
 
   // Fetch categories from backend
   useEffect(() => {
-    fetch("http://localhost:4000/api/categories")
-      .then((res) => res.json())
+    fetchCategories()
       .then((data) => {
         if (data.success && Array.isArray(data.categories)) {
           setCategories([{ _id: "All", name: "All" }, ...data.categories]);
         }
-      });
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
   }, []);
 
   // Fetch products from backend
   useEffect(() => {
-    fetch("http://localhost:4000/api/products")
-      .then((res) => res.json())
+    fetchProducts()
       .then((data) => {
-        if (data.success) {
+        if (data.success && Array.isArray(data.products)) {
           setProducts(
             data.products.map((prod: any) => ({
               id: prod._id,
               name: prod.productName,
-              category: prod.category?._id || "Unknown", // backend id
-              categoryName: prod.category?.name || prod.category || "Unknown", // for UI filter
+              category: prod.category?._id || "Unknown",
+              categoryName: prod.category?.name || prod.category || "Unknown",
               marvelCategory: prod.marvelCategory,
               description: prod.description,
               features: prod.features || [],
               price: prod.price,
               status: prod.status,
               views: prod.views || 0,
-              images: prod.images || [], // array of base64 images
-              image: prod.images?.[0] || "/placeholder.svg", // first image or placeholder
+              images: prod.images || [],
+              image: prod.images?.[0] || "/placeholder.svg",
               createdAt: new Date(prod.createdAt).toISOString().split("T")[0],
               originalPrice: prod.originalPrice || prod.price + 500,
               rating: prod.rating || 4.8,
@@ -127,7 +127,8 @@ export default function ProductsPage() {
             }))
           );
         }
-      });
+      })
+      .catch((err) => console.error("Failed to fetch products:", err));
   }, []);
 
   // --- Filtering logic ---
