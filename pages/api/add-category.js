@@ -26,6 +26,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const categories = await Category.find().sort({ createdAt: -1 });
+      console.log(`✅ Found ${categories.length} categories`);
       return res.status(200).json({ success: true, data: categories, categories });
     }
 
