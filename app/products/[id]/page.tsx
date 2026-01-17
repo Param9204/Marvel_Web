@@ -1,5 +1,6 @@
 "use client";
 
+import { ARViewer } from "@/components/ar-viewer";
 import { Footer } from "@/components/footer";
 import { Navbar } from "@/components/navbar";
 import { Badge } from "@/components/ui/badge";
@@ -8,19 +9,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Award,
-    ChevronLeft,
-    ChevronRight,
-    RotateCcw,
-    Share2,
-    Shield,
-    Star,
-    Truck,
-    Zap,
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  Share2,
+  Shield,
+  Star,
+  Truck,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+
+// Define fetchProduct function
+async function fetchProduct(productId: string) {
+  try {
+    // Try Next.js API route first
+    const res = await fetch(`/api/add-product?id=${productId}`);
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.error("API route error:", err);
+  }
+
+  // Fallback to static data or return empty
+  return { success: false, product: null };
+}
 
 const productData = {
   1: {
@@ -137,7 +155,7 @@ function getMergedProduct(dynamic: any, staticProd: any) {
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const productId = params.id as string;
+  const productId = params?.id as string;
 
   const staticProduct = productData[Number(productId) as keyof typeof productData];
   const [fetchedProduct, setFetchedProduct] = useState<any | null>(null);
@@ -147,8 +165,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!staticProduct && productId) {
       setLoading(true);
-      fetch(`http://localhost:4000/api/products/${productId}`)
-        .then((res) => res.json())
+      fetchProduct(productId) // Ensure fetchProduct is defined or imported
         .then((data) => {
           if (data.success && data.product) {
             setFetchedProduct({
@@ -160,6 +177,7 @@ export default function ProductDetailPage() {
             });
           }
         })
+        .catch((err) => console.error("Failed to fetch product:", err))
         .finally(() => setLoading(false));
     }
   }, [productId, staticProduct]);

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fetchCategories, fetchProducts } from "@/lib/api";
 import {
   Activity,
   Eye,
@@ -64,10 +65,9 @@ export default function VisitorAnalytics() {
 
   // Fetch products/categories/locations for stats
   useEffect(() => {
-    fetch("http://localhost:4000/api/products")
-      .then((res) => res.json())
+    fetchProducts()
       .then((data) => {
-        if (data.success) {
+        if (data.success && Array.isArray(data.products)) {
           setProducts(
             data.products.map((prod: any) => ({
               id: prod._id,
@@ -84,13 +84,14 @@ export default function VisitorAnalytics() {
             }))
           );
         }
-      });
+      })
+      .catch((err) => console.error("Failed to fetch products:", err));
 
-    fetch("http://localhost:4000/api/categories")
-      .then((res) => res.json())
+    fetchCategories()
       .then((data) => {
         if (data.success) setCategories(data.categories);
-      });
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
 
     fetch("http://localhost:4000/api/location")
       .then((res) => res.json())

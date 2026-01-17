@@ -10,20 +10,21 @@ import { Navbar } from "@/components/navbar";
 import { ScrollAnimation } from "@/components/scroll-animations";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { fetchProducts } from "@/lib/api";
 import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
+    AnimatePresence,
+    motion,
+    useMotionValue,
+    useSpring,
+    useTransform,
 } from "framer-motion";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Shield,
-  Star,
-  Users,
-  Zap,
+    ChevronLeft,
+    ChevronRight,
+    Shield,
+    Star,
+    Users,
+    Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -272,10 +273,9 @@ export default function HomePage() {
 
   // Fetch featured products from backend
   useEffect(() => {
-    fetch("http://localhost:4000/api/products")
-      .then((res) => res.json())
+    fetchProducts()
       .then((data) => {
-        if (data.success) {
+        if (data.success && Array.isArray(data.products)) {
           const prods = data.products.slice(0, 3).map((prod: any) => ({
             id: prod._id,
             name: prod.productName,
@@ -294,7 +294,8 @@ export default function HomePage() {
           }));
           setFeaturedProducts(prods);
         }
-      });
+      })
+      .catch((err) => console.error("Failed to fetch featured products:", err));
   }, []);
 
   const nextSlide = () => {

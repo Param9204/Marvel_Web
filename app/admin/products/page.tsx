@@ -36,6 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { fetchCategories, fetchProducts } from "@/lib/api";
 import {
   BarChart3,
   Edit,
@@ -90,18 +91,17 @@ export default function ProductsManagement() {
   const [editImages, setEditImages] = useState<File[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/categories")
-      .then((res) => res.json())
+    fetchCategories()
       .then((data) => {
         if (data.success) setCategories(data.categories);
-      });
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/products")
-      .then((res) => res.json())
+    fetchProducts()
       .then((data) => {
-        if (data.success) {
+        if (data.success && Array.isArray(data.products)) {
           setProducts(
             data.products.map((prod: any) => ({
               id: prod._id,
@@ -119,7 +119,8 @@ export default function ProductsManagement() {
             }))
           );
         }
-      });
+      })
+      .catch((err) => console.error("Failed to fetch products:", err));
   }, []);
 
   useEffect(() => {

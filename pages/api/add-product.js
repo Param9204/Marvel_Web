@@ -15,6 +15,8 @@ module.exports = async (req, res) => {
   }
 
   try {
+    await connectDB();
+
     if (req.method === "POST") {
       const {
         productName,
@@ -44,7 +46,19 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "GET") {
+      // Handle single product fetch by id
+      const { id } = req.query;
+      if (id) {
+        const product = await Product.findById(id).populate("category");
+        if (!product) {
+          return res.status(404).json({ success: false, error: "Product not found" });
+        }
+        return res.status(200).json({ success: true, product });
+      }
+
+      // Get all products
       const products = await Product.find().sort({ createdAt: -1 }).limit(200).populate("category");
+      console.log(`✅ Found ${products.length} products`);
       return res.status(200).json({ success: true, data: products, products });
     }
 
