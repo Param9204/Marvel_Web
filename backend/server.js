@@ -122,8 +122,16 @@ app.get("/api/location", async (req, res) => {
 });
 
 // ====== START SERVER ======
-app.listen(PORT, () =>
-  console.log(
-    `🚀 Marvel Factory Contact API running!\nListening on http://localhost:${PORT}\nAccepting requests from: ${FRONTEND_URL}`
-  )
-);
+// If this file is run directly (node server.js), start the HTTP server.
+// Otherwise export the Express `app` so serverless platforms can import it.
+if (require.main === module) {
+  app.listen(PORT, () =>
+    console.log(
+      `🚀 Marvel Factory Contact API running!\nListening on http://localhost:${PORT}\nAccepting requests from: ${FRONTEND_URL}`
+    )
+  );
+} else {
+  // Export for CommonJS and provide a `default` property for ESM consumers.
+  module.exports = app;
+  module.exports.default = app;
+}
