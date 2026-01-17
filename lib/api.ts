@@ -20,34 +20,78 @@ export const getApiUrl = () => {
  * Fetch categories from API
  */
 export const fetchCategories = async () => {
-  const apiUrl = getApiUrl();
-  const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" ? "/api/add-category" : `${apiUrl}/api/categories`;
+  try {
+    const apiUrl = getApiUrl();
+    const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" 
+      ? "/api/add-category" 
+      : `${apiUrl}/api/categories`;
 
-  const res = await fetch(endpoint);
-  const data = await res.json();
-  return data;
+    const res = await fetch(endpoint, {
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    
+    const data = await res.json();
+    // Support both formats: { categories: [...] } and { data: [...] }
+    return {
+      success: data.success !== false,
+      categories: data.categories || data.data || [],
+    };
+  } catch (error) {
+    console.error("❌ Fetch categories error:", error);
+    return { success: false, categories: [] };
+  }
 };
 
 /**
  * Fetch products from API
  */
 export const fetchProducts = async () => {
-  const apiUrl = getApiUrl();
-  const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" ? "/api/add-product" : `${apiUrl}/api/products`;
+  try {
+    const apiUrl = getApiUrl();
+    const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" 
+      ? "/api/add-product" 
+      : `${apiUrl}/api/products`;
 
-  const res = await fetch(endpoint);
-  const data = await res.json();
-  return data;
+    const res = await fetch(endpoint, {
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    
+    const data = await res.json();
+    // Support both formats: { products: [...] } and { data: [...] }
+    return {
+      success: data.success !== false,
+      products: data.products || data.data || [],
+    };
+  } catch (error) {
+    console.error("❌ Fetch products error:", error);
+    return { success: false, products: [] };
+  }
 };
 
 /**
  * Fetch single product from API
  */
 export const fetchProduct = async (id: string) => {
-  const apiUrl = getApiUrl();
-  const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" ? `/api/add-product?id=${id}` : `${apiUrl}/api/products/${id}`;
+  try {
+    const apiUrl = getApiUrl();
+    const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" 
+      ? `/api/add-product?id=${id}` 
+      : `${apiUrl}/api/products/${id}`;
 
-  const res = await fetch(endpoint);
-  const data = await res.json();
-  return data;
+    const res = await fetch(endpoint, {
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    
+    const data = await res.json();
+    return data;
+  } catch (error) {
+    console.error("❌ Fetch product error:", error);
+    return { success: false };
+  }
 };

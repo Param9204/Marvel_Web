@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const categories = await Category.find().sort({ createdAt: -1 });
-      return res.status(200).json({ success: true, categories });
+      return res.status(200).json({ success: true, data: categories, categories });
     }
 
     return res.status(405).json({ error: "Method not allowed" });

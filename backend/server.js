@@ -17,7 +17,33 @@ connectDB();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: FRONTEND_URL }));
+
+// CORS configuration - allow all origins in development, restrict in production
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:4000",
+      "http://127.0.0.1:4000",
+      FRONTEND_URL,
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV === "production") {
+      callback(new Error("Not allowed by CORS"));
+    } else {
+      // Allow all in development
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);

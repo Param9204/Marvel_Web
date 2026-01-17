@@ -45,7 +45,7 @@ module.exports = async (req, res) => {
 
     if (req.method === "GET") {
       const products = await Product.find().sort({ createdAt: -1 }).limit(200).populate("category");
-      return res.status(200).json(products);
+      return res.status(200).json({ success: true, data: products, products });
     }
 
     return res.status(405).json({ error: "Method not allowed" });
