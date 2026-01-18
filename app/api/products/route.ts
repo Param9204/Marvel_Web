@@ -36,9 +36,10 @@ export async function GET(req: NextRequest) {
       .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .setOptions({ includeImages: true });
     
-    const total = await Product.countDocuments();
+    const total = await Product.countDocuments().setOptions({ includeImages: true });
 
     console.log(`✅ Found ${products.length} products (Total: ${total})`);
     
