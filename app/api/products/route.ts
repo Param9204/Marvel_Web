@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     console.log('📦 Fetching products...');
     const products = await Product.find()
       .select('-images')
-      .populate('category')
+      .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 });
 
     console.log(`✅ Found ${products.length} products`);
@@ -102,8 +102,8 @@ export async function POST(req: NextRequest) {
     });
     await product.save();
     
-    // Populate category before returning
-    await product.populate('category');
+    // Populate category before returning (explicit model to use Category)
+    await product.populate({ path: 'category', model: Category });
 
     return NextResponse.json(
       { success: true, product },
