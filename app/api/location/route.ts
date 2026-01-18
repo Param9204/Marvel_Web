@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
       {
         $match: {
           timestamp: { $gte: last7days },
-          country: { $exists: true, $ne: null },
         },
       },
       {
@@ -65,14 +64,14 @@ export async function GET(req: NextRequest) {
 
     console.log(`✅ Found ${locationStats.length} location groups`);
 
-    // If no data, return empty array (no static fallback)
+    // If no data, return empty array
     if (!locationStats || locationStats.length === 0) {
       console.log('⚠️ No location data found, returning empty array');
       return NextResponse.json([], { headers: corsHeaders });
     }
 
     // Calculate total for percentages
-    const total = locationStats.reduce((sum: number, loc: { users: number }) => sum + (loc.users || 0), 0);
+    const total = locationStats.reduce((sum: number, loc: any) => sum + (loc.users || 0), 0);
 
     const enrichedData = locationStats.map((loc: any) => ({
       country: loc.country || 'Unknown',
@@ -82,12 +81,11 @@ export async function GET(req: NextRequest) {
       percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
     }));
 
-    console.log('✅ Returning enriched location data');
+    console.log('✅ Returning enriched location data:', enrichedData);
     return NextResponse.json(enrichedData, { headers: corsHeaders });
   } catch (error: any) {
     console.error('❌ Error fetching location data:', error.message);
     console.error('Stack:', error.stack);
-    // Return empty array instead of error to prevent 500
     return NextResponse.json([], { headers: corsHeaders });
   }
 }
