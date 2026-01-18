@@ -21,7 +21,8 @@ module.exports = async (req, res) => {
     const categories = await Category.find().limit(5);
 
     // Get MongoDB URI (masked for security)
-    const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/marvelfactory";
+    // const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017/marvelfactory";
+    const mongoUri = process.env.MONGODB_URI || "mongodb+srv://paramthumar2708_db_user:Test%40123@cluster0.xcs9f1z.mongodb.net/marvelfactory?retryWrites=true&w=majority";
     const maskedUri = mongoUri.replace(/:[^@]*@/, ":****@");
 
     return res.status(200).json({

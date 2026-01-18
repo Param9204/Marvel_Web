@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
-// Use `process.env.MONGODB_URI`. Fallback to local MongoDB for development.
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/marvelfactory";
+// Use `process.env.MONGODB_URI`. Fallback to MongoDB Atlas for development.
+// Comment out MongoDB Atlas URI below and uncomment local MongoDB for local development
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://paramthumar2708_db_user:Test%40123@cluster0.xcs9f1z.mongodb.net/marvelfactory?retryWrites=true&w=majority";
 
 // Cache the connection across lambda invocations in serverless environments.
 // This avoids creating new connections on every invocation.

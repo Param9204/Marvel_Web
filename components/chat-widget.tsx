@@ -125,20 +125,20 @@ export function ChatWidget() {
     }
     // Handle products page navigation
     if (option.includes("⚡ See all Marvel Collection")) {
-      window.open("http://localhost:3000/products", "_blank")
+      window.open("/products", "_blank")
       return
     }
     // Handle other product-specific navigation (optional - you can add more specific product pages)
     if (option.includes("🔥 View Iron Man Elite")) {
-      window.open("http://localhost:3000/products?filter=iron-man", "_blank")
+      window.open("/products?filter=iron-man", "_blank")
       return
     }
     if (option.includes("🛡️ View Captain America")) {
-      window.open("http://localhost:3000/products?filter=captain-america", "_blank")
+      window.open("/products?filter=captain-america", "_blank")
       return
     }
     if (option.includes("🕸️ View Spider-Man Web")) {
-      window.open("http://localhost:3000/products?filter=spider-man", "_blank")
+      window.open("/products?filter=spider-man", "_blank")
       return
     }
     // Regular message handling for other options
