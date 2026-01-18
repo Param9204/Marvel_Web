@@ -10,7 +10,7 @@ export function LocationTracker() {
 
     async function sendLocation(locationObj: any) {
       try {
-        await fetch("http://localhost:4000/api/location", {
+        await fetch("/api/location", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...locationObj, timestamp: Date.now() }),

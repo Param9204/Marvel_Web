@@ -126,7 +126,7 @@ export function AIChatbot() {
     setSending(true);
     setSendStatus(null);
     try {
-      const res = await fetch("http://localhost:4000/api/chat-transcript", {
+      const res = await fetch("/api/chat-transcript", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailValue, transcript: transcriptText }),

@@ -3,41 +3,41 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-  Activity,
-  Clock,
-  Eye,
-  Globe,
-  Monitor,
-  Pause,
-  Play,
-  Smartphone,
-  Tablet,
-  TrendingUp,
-  Users,
+    Activity,
+    Clock,
+    Eye,
+    Globe,
+    Monitor,
+    Pause,
+    Play,
+    Smartphone,
+    Tablet,
+    TrendingUp,
+    Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
 } from "recharts";
 
 // Helper for device color
@@ -69,7 +69,7 @@ export default function VisitorAnalytics() {
       { time: "00:25", users: 67 },
       { time: "00:30", users: 73 },
     ]);
-    fetch("http://localhost:4000/api/location")
+    fetch("/api/location")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

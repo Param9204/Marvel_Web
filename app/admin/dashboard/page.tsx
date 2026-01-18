@@ -3,33 +3,33 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { fetchCategories, fetchProducts } from "@/lib/api";
 import {
-  Activity,
-  Eye,
-  Gift,
-  Globe,
-  Monitor,
-  Package,
-  Pause,
-  Play,
-  Smartphone,
-  Tablet,
-  TrendingUp,
-  Users,
+    Activity,
+    Eye,
+    Gift,
+    Globe,
+    Monitor,
+    Package,
+    Pause,
+    Play,
+    Smartphone,
+    Tablet,
+    TrendingUp,
+    Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -93,7 +93,7 @@ export default function VisitorAnalytics() {
       })
       .catch((err) => console.error("Failed to fetch categories:", err));
 
-    fetch("http://localhost:4000/api/location")
+    fetch("/api/location")
       .then((res) => res.json())
       .then((data) => {
         setVisitorLocations(data);

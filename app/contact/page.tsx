@@ -7,29 +7,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle,
-  Clock,
-  ExternalLink,
-  Globe,
-  Mail,
-  MapPin,
-  MessageSquare,
-  Phone,
-  Send,
-  Shield,
-  Star,
-  Users,
-  Zap
+    AlertCircle,
+    ArrowRight,
+    CheckCircle,
+    Clock,
+    ExternalLink,
+    Globe,
+    Mail,
+    MapPin,
+    MessageSquare,
+    Phone,
+    Send,
+    Shield,
+    Star,
+    Users,
+    Zap
 } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
@@ -159,7 +159,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      await fetch("http://localhost:4000/api/contact", {
+      await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
