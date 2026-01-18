@@ -20,7 +20,6 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '12');
-    const includeImages = url.searchParams.get('images') === 'true';
     const skip = (page - 1) * limit;
 
     await connectDB();
@@ -32,23 +31,15 @@ export async function GET(req: NextRequest) {
     
     console.log(`📦 Fetching products (page: ${page}, limit: ${limit})...`);
     
-    // Build query - exclude images by default
-    let query = Product.find()
+    // Always fetch with images
+    const products = await Product.find()
       .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
     
-    // Only include images if explicitly requested
-    if (!includeImages) {
-      query = query.select('-images');
-    }
-    
-    const [products, total] = await Promise.all([
-      query.exec(),
-      Product.countDocuments()
-    ]);
+    const total = await Product.countDocuments();
 
     console.log(`✅ Found ${products.length} products (Total: ${total})`);
     
@@ -62,19 +53,15 @@ export async function GET(req: NextRequest) {
         description: p.description,
         status: p.status,
         createdAt: p.createdAt,
-      };
-      
-      // Only include images if they were fetched
-      if (p.images) {
-        formatted.images = p.images?.map((img: any) => {
+        images: (p.images || []).map((img: any) => {
           if (img.data && img.data.buffer) {
             return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
           } else if (img.data) {
             return `data:${img.contentType};base64,${img.data.toString('base64')}`;
           }
           return null;
-        }).filter((img: any) => img !== null) || [];
-      }
+        }).filter((img: any) => img !== null),
+      };
       
       return formatted;
     });
