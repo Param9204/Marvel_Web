@@ -56,13 +56,13 @@ export const fetchProducts = async () => {
  */
 export const fetchProduct = async (id: string) => {
   try {
-    const apiUrl = getApiUrl();
-    const endpoint = process.env.NEXT_PUBLIC_USE_NEXTJS_API === "true" 
-      ? `/api/add-product?id=${id}` 
-      : `${apiUrl}/api/products/${id}`;
-
-    const res = await fetch(endpoint, {
-      headres = await fetch(`/api/products/${id}`
+    const res = await fetch(`/api/products/${id}`, {
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    
+    const data = await res.json();
     return data;
   } catch (error) {
     console.error("❌ Fetch product error:", error);

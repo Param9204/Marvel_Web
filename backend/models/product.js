@@ -26,4 +26,5 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Product", productSchema);
+// Prevent model overwrite error in Next.js hot reload
+module.exports = mongoose.models.Product || mongoose.model("Product", productSchema);

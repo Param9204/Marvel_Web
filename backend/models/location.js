@@ -9,4 +9,5 @@ const LocationSchema = new mongoose.Schema({
   timestamp: Number,
 });
 
-module.exports = mongoose.model('Location', LocationSchema);
+// Prevent model overwrite error in Next.js hot reload
+module.exports = mongoose.models.Location || mongoose.model('Location', LocationSchema);

@@ -7,4 +7,5 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Category", categorySchema);
+// Prevent model overwrite error in Next.js hot reload
+module.exports = mongoose.models.Category || mongoose.model("Category", categorySchema);
