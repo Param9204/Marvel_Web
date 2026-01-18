@@ -34,13 +34,18 @@ export const fetchCategories = async () => {
  */
 export const fetchProducts = async () => {
   try {
+    console.log('📡 Fetching products from /api/products...');
     const res = await fetch("/api/products", {
       headers: { "Content-Type": "application/json" },
     });
     
+    console.log('📦 API Response status:', res.status);
+    
     if (!res.ok) throw new Error(`API error: ${res.status}`);
     
     const data = await res.json();
+    console.log('✅ Products fetched:', data.products?.length || 0, 'items');
+    
     return {
       success: data.success !== false,
       products: data.products || data.data || [],
