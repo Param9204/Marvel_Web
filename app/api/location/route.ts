@@ -39,6 +39,11 @@ export async function GET(req: NextRequest) {
       },
     ]);
 
+    // If no data, return empty array (no static fallback)
+    if (!locationStats || locationStats.length === 0) {
+      return NextResponse.json([]);
+    }
+
     // Calculate total for percentages
     interface LocationStat {
         country: string;
@@ -48,26 +53,22 @@ export async function GET(req: NextRequest) {
     }
 
     interface EnrichedLocationStat extends LocationStat {
-        percentage: string | number;
+        percentage: number;
     }
 
     const total: number = locationStats.reduce((sum: number, loc: LocationStat) => sum + loc.users, 0);
-    interface EnrichedLocationStat extends LocationStat {
-        percentage: string | number;
-    }
 
     const enrichedData: EnrichedLocationStat[] = locationStats.map((loc: LocationStat): EnrichedLocationStat => ({
       ...loc,
-      percentage: total > 0 ? ((loc.users / total) * 100).toFixed(1) : 0,
+      percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
     }));
 
     return NextResponse.json(enrichedData);
   } catch (error: any) {
-    console.error('❌ Error fetching location data:', error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    console.error('❌ Error fetching location data:', error.message);
+    console.error('Stack:', error.stack);
+    // Return empty array instead of error to prevent 500
+    return NextResponse.json([]);
   }
 }
 

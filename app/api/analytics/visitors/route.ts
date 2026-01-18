@@ -1,5 +1,5 @@
 import connectDB from '@/backend/db';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,6 +16,11 @@ export async function GET(req: NextRequest) {
       .limit(50)
       .lean();
 
+    // If no visitors, return empty array
+    if (!visitors || visitors.length === 0) {
+      return NextResponse.json([]);
+    }
+
     const formattedVisitors = visitors.map((visitor: any, idx: number) => ({
       id: visitor._id.toString(),
       location: `${visitor.city}, ${visitor.country}`,
@@ -30,12 +35,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(formattedVisitors);
   } catch (error: any) {
-    console.error('❌ Error fetching visitors data:', error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    console.error('❌ Error fetching visitors data:', error.message);
+    console.error('Stack:', error.stack);
+    // Return empty array instead of error
+    return NextResponse.json([]);
   }
 }
-
-import { NextRequest } from 'next/server';

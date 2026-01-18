@@ -45,6 +45,11 @@ export async function GET() {
         color: string;
     }
 
+    // If no data, return empty array
+    if (!deviceStats || deviceStats.length === 0) {
+      return NextResponse.json([]);
+    }
+
     const total: number = deviceStats.reduce((sum: number, stat: DeviceStat) => sum + stat.users, 0);
     const enrichedData: EnrichedDeviceData[] = deviceStats.map((stat: DeviceStat): EnrichedDeviceData => ({
       device: stat._id || 'Unknown',
@@ -55,10 +60,9 @@ export async function GET() {
 
     return NextResponse.json(enrichedData);
   } catch (error: any) {
-    console.error('❌ Error fetching device data:', error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+    console.error('❌ Error fetching device data:', error.message);
+    console.error('Stack:', error.stack);
+    // Return empty array instead of error
+    return NextResponse.json([]);
   }
 }
