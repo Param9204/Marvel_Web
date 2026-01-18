@@ -1,6 +1,8 @@
-import connectDB from '@/backend/db';
 import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Removed duplicate GET function
+
 
 // Define the VisitorDocument interface globally
 interface VisitorDocument extends mongoose.Document {
@@ -83,3 +85,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json([]);
   }
 }
+function connectDB() {
+    throw new Error('Function not implemented.');
+}
+

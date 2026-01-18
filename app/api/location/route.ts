@@ -1,5 +1,4 @@
 import connectDB from '@/backend/db';
-import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 
 // CORS headers
@@ -9,47 +8,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// Define the Visitor model inline to avoid require() issues
-import { Model, Document } from 'mongoose';
 
-interface VisitorDocument extends Document {
-  lat: number | null;
-  lng: number | null;
-  country: string;
-  city: string;
-  flag: string;
-  deviceType: 'Desktop' | 'Mobile' | 'Tablet';
-  browser: string;
-  page: string;
-  userAgent: string | null;
-  timestamp: Date;
-  sessionId?: string;
-}
-
-const getVisitorModel = (): Model<VisitorDocument> => {
-  if (mongoose.models.Visitor) {
-    return mongoose.models.Visitor;
-  }
-
-  const visitorSchema = new mongoose.Schema(
-    {
-      lat: { type: Number, default: null },
-      lng: { type: Number, default: null },
-      country: { type: String, default: 'Unknown' },
-      city: { type: String, default: 'Unknown' },
-      flag: { type: String, default: '🌍' },
-      deviceType: { type: String, enum: ['Desktop', 'Mobile', 'Tablet'], default: 'Desktop' },
-      browser: { type: String, default: 'Unknown' },
-      page: { type: String, default: '/' },
-      userAgent: { type: String, default: null },
-      timestamp: { type: Date, default: Date.now, index: true },
-      sessionId: { type: String, index: true },
-    },
-    { timestamps: true }
-  );
-
-  return mongoose.model<VisitorDocument>('Visitor', visitorSchema);
-};
 
 export async function OPTIONS() {
   return NextResponse.json({}, { headers: corsHeaders });
@@ -62,15 +21,15 @@ export async function GET(req: NextRequest) {
     await connectDB();
     console.log('✅ DB Connected');
     
-    const Visitor = getVisitorModel();
-    console.log('✅ Visitor model loaded');
+    const Location = require('@/backend/models/location');
+    console.log('✅ Location model loaded');
 
-    // Get visitors from last 7 days (expanded for better data)
-    const last7days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // Get locations from last 7 days
+    const last7days = Date.now() - 7 * 24 * 60 * 60 * 1000;
     
-    console.log('📊 Querying visitor data...');
+    console.log('📊 Querying location data...');
     
-    const locationStats = await Visitor.aggregate([
+    const locationStats = await Location.aggregate([
       {
         $match: {
           timestamp: { $gte: last7days },
@@ -135,54 +94,39 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('🔵 Location API POST - Receiving visitor data...');
+    console.log('🔵 Location API POST - Receiving location data...');
     
     await connectDB();
     console.log('✅ DB Connected');
     
-    const Visitor = getVisitorModel();
-    console.log('✅ Visitor model loaded');
+    const Location = require('@/backend/models/location');
+    console.log('✅ Location model loaded');
 
     const body = await req.json();
     console.log('📦 Received data:', { 
       country: body.country, 
-      city: body.city,
-      deviceType: body.deviceType 
+      city: body.city
     });
 
-    // Detect device type from user agent
-    const userAgent = req.headers.get('user-agent') || '';
-    let deviceType = 'Desktop';
-    if (/mobile/i.test(userAgent)) deviceType = 'Mobile';
-    if (/tablet|ipad/i.test(userAgent)) deviceType = 'Tablet';
-
-    // Generate or get session ID
-    const sessionId = body.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-    const visitorData = {
+    const locationData = {
       lat: body.lat || null,
       lng: body.lng || null,
       country: body.country || 'Unknown',
       city: body.city || 'Unknown',
       flag: body.flag || '🌍',
-      deviceType,
-      browser: body.browser || 'Unknown',
-      page: body.page || '/',
-      userAgent,
-      sessionId,
-      timestamp: new Date(body.timestamp || Date.now()),
+      timestamp: body.timestamp || Date.now(),
     };
 
-    console.log('💾 Saving visitor:', visitorData);
-    const visitor = await Visitor.create(visitorData as VisitorDocument);
-    console.log('✅ Visitor saved successfully:', visitor._id);
+    console.log('💾 Saving location:', locationData);
+    const location = await Location.create(locationData);
+    console.log('✅ Location saved successfully:', location._id);
 
     return NextResponse.json({
       success: true,
-      visitor: {
-        id: visitor._id,
-        country: visitor.country,
-        city: visitor.city,
+      location: {
+        id: location._id,
+        country: location.country,
+        city: location.city,
       },
     }, { headers: corsHeaders });
   } catch (error: any) {

@@ -1,6 +1,11 @@
-import connectDB from '@/backend/db';
 import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
+
+export async function GETEmptyResponse() {
+  // Device tracking removed - using Location model only
+  return NextResponse.json([]);
+}
+
 
 // Define the Visitor model inline to avoid require() issues
 const getVisitorModel = () => {
@@ -93,3 +98,7 @@ export async function GET() {
     return NextResponse.json([]);
   }
 }
+function connectDB() {
+    throw new Error('Function not implemented.');
+}
+
