@@ -17,6 +17,12 @@ export async function GET(req: NextRequest) {
   try {
     console.log('🔵 GET /api/products - Starting...');
     
+    const url = new URL(req.url);
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '12');
+    const includeImages = url.searchParams.get('images') === 'true';
+    const skip = (page - 1) * limit;
+
     await connectDB();
     console.log('✅ DB Connected');
     
@@ -24,36 +30,64 @@ export async function GET(req: NextRequest) {
     const Category = require('@/backend/models/category');
     const Product = require('@/backend/models/product');
     
-    console.log('📦 Fetching products...');
-    const products = await Product.find()
+    console.log(`📦 Fetching products (page: ${page}, limit: ${limit})...`);
+    
+    // Build query - exclude images by default
+    let query = Product.find()
       .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
-
-    console.log(`✅ Found ${products.length} products`);
     
-    const formattedProducts = products.map((p: any) => ({
-      _id: p._id,
-      productName: p.productName,
-      price: p.price,
-      category: p.category,
-      marvelCategory: p.marvelCategory,
-      description: p.description,
-      status: p.status,
-      images: p.images?.map((img: any) => {
-        if (img.data && img.data.buffer) {
-          return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
-        } else if (img.data) {
-          return `data:${img.contentType};base64,${img.data.toString('base64')}`;
-        }
-        return null;
-      }).filter((img: any) => img !== null) || [],
-      createdAt: p.createdAt,
-    }));
+    // Only include images if explicitly requested
+    if (!includeImages) {
+      query = query.select('-images');
+    }
+    
+    const [products, total] = await Promise.all([
+      query.exec(),
+      Product.countDocuments()
+    ]);
+
+    console.log(`✅ Found ${products.length} products (Total: ${total})`);
+    
+    const formattedProducts = products.map((p: any) => {
+      const formatted: any = {
+        _id: p._id,
+        productName: p.productName,
+        price: p.price,
+        category: p.category,
+        marvelCategory: p.marvelCategory,
+        description: p.description,
+        status: p.status,
+        createdAt: p.createdAt,
+      };
+      
+      // Only include images if they were fetched
+      if (p.images) {
+        formatted.images = p.images?.map((img: any) => {
+          if (img.data && img.data.buffer) {
+            return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
+          } else if (img.data) {
+            return `data:${img.contentType};base64,${img.data.toString('base64')}`;
+          }
+          return null;
+        }).filter((img: any) => img !== null) || [];
+      }
+      
+      return formatted;
+    });
 
     return NextResponse.json({
       success: true,
       products: formattedProducts,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
     }, { headers: corsHeaders });
   } catch (error: any) {
     console.error('❌ Error fetching products:', error.message);
