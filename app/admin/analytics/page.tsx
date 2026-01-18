@@ -3,41 +3,41 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-    Activity,
-    Clock,
-    Eye,
-    Globe,
-    Monitor,
-    Pause,
-    Play,
-    Smartphone,
-    Tablet,
-    TrendingUp,
-    Users,
+  Activity,
+  Clock,
+  Eye,
+  Globe,
+  Monitor,
+  Pause,
+  Play,
+  Smartphone,
+  Tablet,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
 
 // Helper for device color
@@ -69,25 +69,43 @@ export default function VisitorAnalytics() {
       { time: "00:25", users: 67 },
       { time: "00:30", users: 73 },
     ]);
+
+    // Fetch location data
     fetch("/api/location")
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          const locations = data.map((loc) => ({
-            country: loc.country,
-            state: "",
-            city: loc.city,
-            users: 1,
-            flag: loc.flag || "🌍",
-          }));
-          setLocationData(locations);
+          setLocationData(data);
         }
-      });
-    setDeviceData([
-      { device: "Desktop", users: 2840, percentage: 45, color: "#ef4444" },
-      { device: "Mobile", users: 2210, percentage: 35, color: "#f59e0b" },
-      { device: "Tablet", users: 1260, percentage: 20, color: "#10b981" },
-    ]);
+      })
+      .catch((err) => console.error("Error fetching locations:", err));
+
+    // Fetch device data
+    fetch("/api/analytics/devices")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setDeviceData(data);
+        }
+      })
+      .catch((err) => console.error("Error fetching devices:", err));
+
+    // Fetch visitors data
+    fetch("/api/analytics/visitors")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const feedItems = data.slice(0, 8).map((visitor: any) => ({
+            id: visitor.id,
+            action: `New visitor from ${visitor.location}`,
+            time: `${Math.floor((Date.now() - new Date(visitor.timestamp).getTime()) / 1000)} seconds ago`,
+            type: "visitor",
+          }));
+          setActivityFeed(feedItems);
+        }
+      })
+      .catch((err) => console.error("Error fetching visitors:", err));
+
     setBrowserData([
       { browser: "Chrome", users: 3420, percentage: 54 },
       { browser: "Safari", users: 1890, percentage: 30 },
@@ -100,56 +118,6 @@ export default function VisitorAnalytics() {
       { page: "/products/iron-man-mattress", views: 5680, avgTime: "4:45" },
       { page: "/features", views: 4320, avgTime: "2:18" },
       { page: "/contact", views: 2890, avgTime: "1:56" },
-    ]);
-    setActivityFeed([
-      {
-        id: 1,
-        action: "New visitor from Los Angeles, CA",
-        time: "2 seconds ago",
-        type: "visitor",
-      },
-      {
-        id: 2,
-        action: "Product view: Iron Man Arc Reactor Mattress",
-        time: "15 seconds ago",
-        type: "product",
-      },
-      {
-        id: 3,
-        action: "New visitor from Toronto, ON",
-        time: "32 seconds ago",
-        type: "visitor",
-      },
-      {
-        id: 4,
-        action: "Offer viewed: Hero's Welcome - 30% Off",
-        time: "45 seconds ago",
-        type: "offer",
-      },
-      {
-        id: 5,
-        action: "New visitor from London, UK",
-        time: "1 minute ago",
-        type: "visitor",
-      },
-      {
-        id: 6,
-        action: "Contact form submitted",
-        time: "2 minutes ago",
-        type: "conversion",
-      },
-      {
-        id: 7,
-        action: "Newsletter signup",
-        time: "3 minutes ago",
-        type: "conversion",
-      },
-      {
-        id: 8,
-        action: "New visitor from Sydney, AU",
-        time: "4 minutes ago",
-        type: "visitor",
-      },
     ]);
   }, []);
 

@@ -8,14 +8,39 @@ export function LocationTracker() {
       sessionStorage.setItem("locationSent", "true");
     }
 
+    // Get or create session ID
+    let sessionId = sessionStorage.getItem("sessionId");
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sessionStorage.setItem("sessionId", sessionId);
+    }
+
     async function sendLocation(locationObj: any) {
       try {
         await fetch("/api/location", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...locationObj, timestamp: Date.now() }),
+          body: JSON.stringify({
+            ...locationObj,
+            timestamp: Date.now(),
+            sessionId,
+            page: typeof window !== "undefined" ? window.location.pathname : "/",
+            browser: getBrowserName(),
+          }),
         });
-      } catch {}
+      } catch (err) {
+        console.error("Failed to send location data:", err);
+      }
+    }
+
+    function getBrowserName() {
+      const userAgent = navigator.userAgent;
+      if (userAgent.includes("Chrome")) return "Chrome";
+      if (userAgent.includes("Safari")) return "Safari";
+      if (userAgent.includes("Firefox")) return "Firefox";
+      if (userAgent.includes("Edge")) return "Edge";
+      if (userAgent.includes("Opera")) return "Opera";
+      return "Unknown";
     }
 
     async function fetchIPInfo() {
