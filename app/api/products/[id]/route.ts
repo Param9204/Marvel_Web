@@ -21,7 +21,7 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    const product = await Product.findById(params.id).populate('category') as ProductType | null;
+    const product = await Product.findById(params.id).populate('category').setOptions({ includeImages: true }) as ProductType | null;
 
     if (!product) {
       return NextResponse.json(
