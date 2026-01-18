@@ -3,22 +3,33 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('🔵 Location API GET - Starting...');
+    
     await connectDB();
+    console.log('✅ DB Connected');
+    
     const Visitor = require('@/backend/models/visitor');
+    console.log('✅ Visitor model loaded');
 
-    // Get visitors from last 24 hours
-    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
+    // Get visitors from last 7 days (expanded for better data)
+    const last7days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    
+    console.log('📊 Querying visitor data...');
+    
     const locationStats = await Visitor.aggregate([
       {
         $match: {
-          timestamp: { $gte: last24h },
-          country: { $ne: 'Unknown' },
+          timestamp: { $gte: last7days },
+          country: { $exists: true, $nin: ['Unknown', null, ''] },
         },
       },
       {
         $group: {
-          _id: { country: '$country', city: '$city', flag: '$flag' },
+          _id: { 
+            country: '$country', 
+            city: '$city', 
+            flag: '$flag' 
+          },
           users: { $sum: 1 },
         },
       },
@@ -39,30 +50,34 @@ export async function GET(req: NextRequest) {
       },
     ]);
 
+    console.log(`✅ Found ${locationStats.length} location groups`);
+
     // If no data, return empty array (no static fallback)
     if (!locationStats || locationStats.length === 0) {
+      console.log('⚠️ No location data found, returning empty array');
       return NextResponse.json([]);
     }
 
     // Calculate total for percentages
+    const total = locationStats.reduce((sum: number, loc: { users: number }) => sum + (loc.users || 0), 0);
+
     interface LocationStat {
         country: string;
         city: string;
         flag: string;
         users: number;
-    }
-
-    interface EnrichedLocationStat extends LocationStat {
         percentage: number;
     }
 
-    const total: number = locationStats.reduce((sum: number, loc: LocationStat) => sum + loc.users, 0);
-
-    const enrichedData: EnrichedLocationStat[] = locationStats.map((loc: LocationStat): EnrichedLocationStat => ({
-      ...loc,
-      percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
+    const enrichedData: LocationStat[] = locationStats.map((loc: { country: string; city: string; flag: string; users: number }) => ({
+        country: loc.country || 'Unknown',
+        city: loc.city || 'Unknown',
+        flag: loc.flag || '🌍',
+        users: loc.users || 0,
+        percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
     }));
 
+    console.log('✅ Returning enriched location data');
     return NextResponse.json(enrichedData);
   } catch (error: any) {
     console.error('❌ Error fetching location data:', error.message);
