@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     
     console.log(`📦 Fetching products (page: ${page}, limit: ${limit})...`);
     
-    // Don't use .lean() when we need to process Buffer data
+    // Fetch products with all data including images
     const products = await Product.find()
       .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 })
@@ -43,7 +43,39 @@ export async function GET(req: NextRequest) {
     console.log(`✅ Found ${products.length} products (Total: ${total})`);
     
     const formattedProducts = products.map((p: any) => {
-      console.log(`Processing product: ${p.productName}, images count: ${p.images?.length || 0}`);
+      const imagesArray: string[] = [];
+      
+      if (p.images && p.images.length > 0) {
+        p.images.forEach((img: any, idx: number) => {
+          try {
+            let buffer: Buffer | null = null;
+            
+            // Convert to proper Buffer if needed
+            if (Buffer.isBuffer(img.data)) {
+              buffer = img.data;
+            } else if (img.data instanceof Uint8Array) {
+              buffer = Buffer.from(img.data);
+            } else if (typeof img.data === 'object' && img.data.buffer) {
+              buffer = Buffer.from(img.data.buffer);
+            } else if (typeof img.data === 'string') {
+              buffer = Buffer.from(img.data, 'base64');
+            }
+            
+            if (buffer) {
+              const contentType = img.contentType || 'image/jpeg';
+              const base64 = buffer.toString('base64');
+              imagesArray.push(`data:${contentType};base64,${base64}`);
+              console.log(`✅ Image ${idx + 1} converted for ${p.productName}`);
+            } else {
+              console.warn(`⚠️ Could not convert image ${idx} for ${p.productName}`);
+            }
+          } catch (err: any) {
+            console.error(`❌ Error converting image ${idx}:`, err.message);
+          }
+        });
+      }
+      
+      console.log(`Product ${p.productName}: ${imagesArray.length} images ready`);
       
       return {
         _id: p._id,
@@ -54,32 +86,7 @@ export async function GET(req: NextRequest) {
         description: p.description,
         status: p.status,
         createdAt: p.createdAt,
-        images: (p.images || []).map((img: any) => {
-          try {
-            // Handle both Buffer objects and objects with data property
-            let buffer = img.data;
-            if (!buffer) {
-              console.warn('No data in image object');
-              return null;
-            }
-            
-            // Check if it's a Buffer
-            if (Buffer.isBuffer(buffer)) {
-              return `data:${img.contentType || 'image/jpeg'};base64,${buffer.toString('base64')}`;
-            }
-            
-            // Check if it has a buffer property
-            if (buffer.buffer) {
-              return `data:${img.contentType || 'image/jpeg'};base64,${Buffer.from(buffer.buffer).toString('base64')}`;
-            }
-            
-            console.warn('Unexpected image data format:', typeof buffer);
-            return null;
-          } catch (err: any) {
-            console.error('Error processing image:', err.message);
-            return null;
-          }
-        }).filter((img: any) => img !== null),
+        images: imagesArray,
       };
     });
 
@@ -151,7 +158,32 @@ export async function POST(req: NextRequest) {
     // Populate category before returning (explicit model to use Category)
     await product.populate({ path: 'category', model: Category });
 
-    // Format response with base64 images
+    // Format response with base64 images using same logic as GET
+    const imagesArray: string[] = [];
+    if (product.images && product.images.length > 0) {
+      product.images.forEach((img: any) => {
+        try {
+          let buffer: Buffer | null = null;
+          
+          if (Buffer.isBuffer(img.data)) {
+            buffer = img.data;
+          } else if (img.data instanceof Uint8Array) {
+            buffer = Buffer.from(img.data);
+          } else if (typeof img.data === 'object' && img.data.buffer) {
+            buffer = Buffer.from(img.data.buffer);
+          }
+          
+          if (buffer) {
+            const contentType = img.contentType || 'image/jpeg';
+            const base64 = buffer.toString('base64');
+            imagesArray.push(`data:${contentType};base64,${base64}`);
+          }
+        } catch (err: any) {
+          console.error('Error processing image:', err.message);
+        }
+      });
+    }
+
     const formattedProduct = {
       _id: product._id,
       productName: product.productName,
@@ -160,14 +192,7 @@ export async function POST(req: NextRequest) {
       marvelCategory: product.marvelCategory,
       description: product.description,
       status: product.status,
-      images: product.images?.map((img: any) => {
-        if (img.data && img.data.buffer) {
-          return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
-        } else if (img.data) {
-          return `data:${img.contentType};base64,${img.data.toString('base64')}`;
-        }
-        return null;
-      }).filter((img: any) => img !== null) || [],
+      images: imagesArray,
       createdAt: product.createdAt,
     };
 

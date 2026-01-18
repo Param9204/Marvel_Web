@@ -30,6 +30,34 @@ export async function GET(
       );
     }
 
+    const imagesArray: string[] = [];
+    
+    if (product.images && product.images.length > 0) {
+      product.images.forEach((img: any) => {
+        try {
+          let buffer: Buffer | null = null;
+          
+          if (Buffer.isBuffer(img.data)) {
+            buffer = img.data;
+          } else if (img.data instanceof Uint8Array) {
+            buffer = Buffer.from(img.data);
+          } else if (typeof img.data === 'object' && img.data.buffer) {
+            buffer = Buffer.from(img.data.buffer);
+          } else if (typeof img.data === 'string') {
+            buffer = Buffer.from(img.data, 'base64');
+          }
+          
+          if (buffer) {
+            const contentType = img.contentType || 'image/jpeg';
+            const base64 = buffer.toString('base64');
+            imagesArray.push(`data:${contentType};base64,${base64}`);
+          }
+        } catch (err) {
+          console.error('Error processing image:', err);
+        }
+      });
+    }
+
     const formattedProduct = {
       _id: product._id,
       productName: product.productName,
@@ -39,21 +67,7 @@ export async function GET(
       description: product.description,
       features: product.features,
       status: product.status,
-      images: (product.images || []).map((img: any) => {
-        try {
-          let buffer = img.data;
-          if (Buffer.isBuffer(buffer)) {
-            return `data:${img.contentType || 'image/jpeg'};base64,${buffer.toString('base64')}`;
-          }
-          if (buffer.buffer) {
-            return `data:${img.contentType || 'image/jpeg'};base64,${Buffer.from(buffer.buffer).toString('base64')}`;
-          }
-          return null;
-        } catch (err) {
-          console.error('Error processing image:', err);
-          return null;
-        }
-      }).filter((img: any) => img !== null),
+      images: imagesArray,
       createdAt: product.createdAt,
     };
 
