@@ -164,7 +164,7 @@ export default function ProductsManagement() {
     formData.append("description", newProduct.description!);
     formData.append("status", newProduct.status || "Active");
     images.forEach((img) => formData.append("images", img));
-    const res = await fetch("http://localhost:4000/api/products/add", {
+    const res = await fetch("/api/products", {
       method: "POST",
       body: formData,
     });
@@ -216,7 +216,7 @@ export default function ProductsManagement() {
     formData.append("status", selectedProduct.status || "Active");
     editImages.forEach((img) => formData.append("images", img));
     const res = await fetch(
-      `http://localhost:4000/api/products/${selectedProduct.id}`,
+      `/api/products/${selectedProduct.id}`,
       {
         method: "PUT",
         body: formData,
@@ -251,7 +251,7 @@ export default function ProductsManagement() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const res = await fetch(`http://localhost:4000/api/products/${id}`, {
+    const res = await fetch(`/api/products/${id}`, {
       method: "DELETE",
     });
     const data = await res.json();
