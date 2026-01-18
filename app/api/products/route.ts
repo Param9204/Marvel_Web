@@ -26,9 +26,9 @@ export async function GET(req: NextRequest) {
     
     console.log('📦 Fetching products...');
     const products = await Product.find()
-      .select('-images')
       .populate({ path: 'category', model: Category })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     console.log(`✅ Found ${products.length} products`);
     
@@ -40,6 +40,14 @@ export async function GET(req: NextRequest) {
       marvelCategory: p.marvelCategory,
       description: p.description,
       status: p.status,
+      images: p.images?.map((img: any) => {
+        if (img.data && img.data.buffer) {
+          return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
+        } else if (img.data) {
+          return `data:${img.contentType};base64,${img.data.toString('base64')}`;
+        }
+        return null;
+      }).filter((img: any) => img !== null) || [],
       createdAt: p.createdAt,
     }));
 
