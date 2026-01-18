@@ -113,8 +113,28 @@ export async function POST(req: NextRequest) {
     // Populate category before returning (explicit model to use Category)
     await product.populate({ path: 'category', model: Category });
 
+    // Format response with base64 images
+    const formattedProduct = {
+      _id: product._id,
+      productName: product.productName,
+      price: product.price,
+      category: product.category,
+      marvelCategory: product.marvelCategory,
+      description: product.description,
+      status: product.status,
+      images: product.images?.map((img: any) => {
+        if (img.data && img.data.buffer) {
+          return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
+        } else if (img.data) {
+          return `data:${img.contentType};base64,${img.data.toString('base64')}`;
+        }
+        return null;
+      }).filter((img: any) => img !== null) || [],
+      createdAt: product.createdAt,
+    };
+
     return NextResponse.json(
-      { success: true, product },
+      { success: true, product: formattedProduct },
       { status: 201 }
     );
   } catch (error: any) {

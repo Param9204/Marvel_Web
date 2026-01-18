@@ -207,58 +207,93 @@ export default function ProductsManagement() {
 
   const handleEditProduct = async () => {
     if (!selectedProduct) return;
-    const formData = new FormData();
-    formData.append("productName", selectedProduct.name);
-    formData.append("price", selectedProduct.price.toString());
-    formData.append("category", selectedProduct.category);
-    formData.append("marvelCategory", selectedProduct.marvelCategory);
-    formData.append("description", selectedProduct.description);
-    formData.append("status", selectedProduct.status || "Active");
-    editImages.forEach((img) => formData.append("images", img));
-    const res = await fetch(
-      `/api/products/${selectedProduct.id}`,
-      {
-        method: "PUT",
-        body: formData,
-      }
-    );
-    const data = await res.json();
-    if (data.success) {
-      setProducts(
-        products.map((p) =>
-          p.id === selectedProduct.id
-            ? {
-                ...p,
-                name: data.product.productName,
-                category: data.product.category,
-                marvelCategory: data.product.marvelCategory,
-                description: data.product.description,
-                features: data.product.features || [],
-                price: data.product.price,
-                status: data.product.status,
-                images: data.product.images || [],
-                image: data.product.images?.[0] || "/marvel-mattress.jpg",
-              }
-            : p
-        )
+    try {
+      const formData = new FormData();
+      formData.append("productName", selectedProduct.name);
+      formData.append("price", selectedProduct.price.toString());
+      formData.append("category", selectedProduct.category);
+      formData.append("marvelCategory", selectedProduct.marvelCategory);
+      formData.append("description", selectedProduct.description);
+      formData.append("status", selectedProduct.status || "Active");
+      editImages.forEach((img) => formData.append("images", img));
+      
+      console.log("🔵 Updating product:", selectedProduct.id);
+      const res = await fetch(
+        `/api/products/${selectedProduct.id}`,
+        {
+          method: "PUT",
+          body: formData,
+        }
       );
-      setIsEditDialogOpen(false);
-      setSelectedProduct(null);
-      setEditImages([]);
-    } else {
-      alert(data.message || "Failed to update product");
+      
+      if (!res.ok) {
+        console.error("❌ HTTP Error:", res.status, res.statusText);
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      console.log("✅ Update response:", data);
+      
+      if (data.success) {
+        setProducts(
+          products.map((p) =>
+            p.id === selectedProduct.id
+              ? {
+                  ...p,
+                  name: data.product.productName,
+                  category: data.product.category?._id || data.product.category,
+                  marvelCategory: data.product.marvelCategory,
+                  description: data.product.description,
+                  features: data.product.features || [],
+                  price: data.product.price,
+                  status: data.product.status,
+                  images: data.product.images || [],
+                  image: data.product.images?.[0] || "/marvel-mattress.jpg",
+                }
+              : p
+          )
+        );
+        setIsEditDialogOpen(false);
+        setSelectedProduct(null);
+        setEditImages([]);
+      } else {
+        console.error("❌ Update failed:", data.message);
+        alert(data.message || "Failed to update product");
+      }
+    } catch (error: any) {
+      console.error("❌ Error updating product:", error);
+      alert("Error updating product: " + error.message);
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const res = await fetch(`/api/products/${id}`, {
-      method: "DELETE",
-    });
-    const data = await res.json();
-    if (data.success) {
-      setProducts(products.filter((product) => product.id !== id));
-    } else {
-      alert(data.message || "Failed to delete product");
+    if (!window.confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+    try {
+      console.log("🔵 Deleting product:", id);
+      const res = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) {
+        console.error("❌ HTTP Error:", res.status, res.statusText);
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const data = await res.json();
+      console.log("✅ Delete response:", data);
+      
+      if (data.success) {
+        setProducts(products.filter((product) => product.id !== id));
+        console.log("✅ Product deleted successfully");
+      } else {
+        console.error("❌ Delete failed:", data.message);
+        alert(data.message || "Failed to delete product");
+      }
+    } catch (error: any) {
+      console.error("❌ Error deleting product:", error);
+      alert("Error deleting product: " + error.message);
     }
   };
 

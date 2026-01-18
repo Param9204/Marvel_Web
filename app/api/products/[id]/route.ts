@@ -1,6 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/backend/db';
 import Product from '@/backend/models/product';
+import { NextRequest, NextResponse } from 'next/server';
+
+interface ProductType {
+  _id: string;
+  productName: string;
+  price: number;
+  category: any;
+  marvelCategory: string;
+  description: string;
+  features?: string[];
+  status: string;
+  images: { data: Buffer; contentType: string }[];
+  createdAt: Date;
+}
 
 export async function GET(
   req: NextRequest,
@@ -8,7 +21,7 @@ export async function GET(
 ) {
   try {
     await connectDB();
-    const product = await Product.findById(params.id).populate('category');
+    const product = await Product.findById(params.id).populate('category') as ProductType | null;
 
     if (!product) {
       return NextResponse.json(
@@ -84,11 +97,40 @@ export async function PUT(
 
     const product = await Product.findByIdAndUpdate(params.id, updateData, {
       new: true,
-    }).populate('category');
+      lean: true,
+    }).populate('category') as ProductType | null;
+
+    // Format product response with base64 encoded images
+    if (!product) {
+      return NextResponse.json(
+        { success: false, message: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    const formattedProduct = {
+      _id: product._id,
+      productName: product.productName,
+      price: product.price,
+      category: product.category,
+      marvelCategory: product.marvelCategory,
+      description: product.description,
+      features: product.features,
+      status: product.status,
+      images: product.images?.map((img: any) => {
+        if (img.data && img.data.buffer) {
+          return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
+        } else if (img.data) {
+          return `data:${img.contentType};base64,${img.data.toString('base64')}`;
+        }
+        return null;
+      }).filter((img: any) => img !== null) || [],
+      createdAt: product.createdAt,
+    };
 
     return NextResponse.json({
       success: true,
-      product,
+      product: formattedProduct,
     });
   } catch (error: any) {
     console.error('❌ Error updating product:', error);
