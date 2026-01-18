@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       {
         $match: {
           timestamp: { $gte: last7days },
-          country: { $exists: true, $nin: ['Unknown', null, ''] },
+          country: { $exists: true, $ne: null },
         },
       },
       {
