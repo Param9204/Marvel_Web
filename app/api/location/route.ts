@@ -1,4 +1,5 @@
 import connectDB from '@/backend/db';
+import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 
 // CORS headers
@@ -6,6 +7,48 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Define the Visitor model inline to avoid require() issues
+import { Model, Document } from 'mongoose';
+
+interface VisitorDocument extends Document {
+  lat: number | null;
+  lng: number | null;
+  country: string;
+  city: string;
+  flag: string;
+  deviceType: 'Desktop' | 'Mobile' | 'Tablet';
+  browser: string;
+  page: string;
+  userAgent: string | null;
+  timestamp: Date;
+  sessionId?: string;
+}
+
+const getVisitorModel = (): Model<VisitorDocument> => {
+  if (mongoose.models.Visitor) {
+    return mongoose.models.Visitor;
+  }
+
+  const visitorSchema = new mongoose.Schema(
+    {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      country: { type: String, default: 'Unknown' },
+      city: { type: String, default: 'Unknown' },
+      flag: { type: String, default: '🌍' },
+      deviceType: { type: String, enum: ['Desktop', 'Mobile', 'Tablet'], default: 'Desktop' },
+      browser: { type: String, default: 'Unknown' },
+      page: { type: String, default: '/' },
+      userAgent: { type: String, default: null },
+      timestamp: { type: Date, default: Date.now, index: true },
+      sessionId: { type: String, index: true },
+    },
+    { timestamps: true }
+  );
+
+  return mongoose.model<VisitorDocument>('Visitor', visitorSchema);
 };
 
 export async function OPTIONS() {
@@ -19,7 +62,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
     console.log('✅ DB Connected');
     
-    const Visitor = require('@/backend/models/visitor');
+    const Visitor = getVisitorModel();
     console.log('✅ Visitor model loaded');
 
     // Get visitors from last 7 days (expanded for better data)
@@ -66,26 +109,18 @@ export async function GET(req: NextRequest) {
     // If no data, return empty array (no static fallback)
     if (!locationStats || locationStats.length === 0) {
       console.log('⚠️ No location data found, returning empty array');
-      return NextResponse.json([]);
+      return NextResponse.json([], { headers: corsHeaders });
     }
 
     // Calculate total for percentages
     const total = locationStats.reduce((sum: number, loc: { users: number }) => sum + (loc.users || 0), 0);
 
-    interface LocationStat {
-        country: string;
-        city: string;
-        flag: string;
-        users: number;
-        percentage: number;
-    }
-
-    const enrichedData: LocationStat[] = locationStats.map((loc: { country: string; city: string; flag: string; users: number }) => ({
-        country: loc.country || 'Unknown',
-        city: loc.city || 'Unknown',
-        flag: loc.flag || '🌍',
-        users: loc.users || 0,
-        percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
+    const enrichedData = locationStats.map((loc: any) => ({
+      country: loc.country || 'Unknown',
+      city: loc.city || 'Unknown',
+      flag: loc.flag || '🌍',
+      users: loc.users || 0,
+      percentage: total > 0 ? parseFloat(((loc.users / total) * 100).toFixed(1)) : 0,
     }));
 
     console.log('✅ Returning enriched location data');
@@ -105,7 +140,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
     console.log('✅ DB Connected');
     
-    const Visitor = require('@/backend/models/visitor');
+    const Visitor = getVisitorModel();
     console.log('✅ Visitor model loaded');
 
     const body = await req.json();
@@ -139,7 +174,7 @@ export async function POST(req: NextRequest) {
     };
 
     console.log('💾 Saving visitor:', visitorData);
-    const visitor = await Visitor.create(visitorData);
+    const visitor = await Visitor.create(visitorData as VisitorDocument);
     console.log('✅ Visitor saved successfully:', visitor._id);
 
     return NextResponse.json({
@@ -159,3 +194,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
