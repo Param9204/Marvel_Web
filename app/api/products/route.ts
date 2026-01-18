@@ -31,20 +31,21 @@ export async function GET(req: NextRequest) {
     
     console.log(`📦 Fetching products (page: ${page}, limit: ${limit})...`);
     
-    // Always fetch with images
+    // Don't use .lean() when we need to process Buffer data
     const products = await Product.find()
       .populate({ path: 'category', model: Category })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit)
-      .lean();
+      .limit(limit);
     
     const total = await Product.countDocuments();
 
     console.log(`✅ Found ${products.length} products (Total: ${total})`);
     
     const formattedProducts = products.map((p: any) => {
-      const formatted: any = {
+      console.log(`Processing product: ${p.productName}, images count: ${p.images?.length || 0}`);
+      
+      return {
         _id: p._id,
         productName: p.productName,
         price: p.price,
@@ -54,16 +55,32 @@ export async function GET(req: NextRequest) {
         status: p.status,
         createdAt: p.createdAt,
         images: (p.images || []).map((img: any) => {
-          if (img.data && img.data.buffer) {
-            return `data:${img.contentType};base64,${Buffer.from(img.data.buffer).toString('base64')}`;
-          } else if (img.data) {
-            return `data:${img.contentType};base64,${img.data.toString('base64')}`;
+          try {
+            // Handle both Buffer objects and objects with data property
+            let buffer = img.data;
+            if (!buffer) {
+              console.warn('No data in image object');
+              return null;
+            }
+            
+            // Check if it's a Buffer
+            if (Buffer.isBuffer(buffer)) {
+              return `data:${img.contentType || 'image/jpeg'};base64,${buffer.toString('base64')}`;
+            }
+            
+            // Check if it has a buffer property
+            if (buffer.buffer) {
+              return `data:${img.contentType || 'image/jpeg'};base64,${Buffer.from(buffer.buffer).toString('base64')}`;
+            }
+            
+            console.warn('Unexpected image data format:', typeof buffer);
+            return null;
+          } catch (err: any) {
+            console.error('Error processing image:', err.message);
+            return null;
           }
-          return null;
         }).filter((img: any) => img !== null),
       };
-      
-      return formatted;
     });
 
     return NextResponse.json({

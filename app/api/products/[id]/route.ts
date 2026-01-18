@@ -39,9 +39,21 @@ export async function GET(
       description: product.description,
       features: product.features,
       status: product.status,
-      images: product.images.map((img: any) =>
-        `data:${img.contentType};base64,${img.data.toString('base64')}`
-      ),
+      images: (product.images || []).map((img: any) => {
+        try {
+          let buffer = img.data;
+          if (Buffer.isBuffer(buffer)) {
+            return `data:${img.contentType || 'image/jpeg'};base64,${buffer.toString('base64')}`;
+          }
+          if (buffer.buffer) {
+            return `data:${img.contentType || 'image/jpeg'};base64,${Buffer.from(buffer.buffer).toString('base64')}`;
+          }
+          return null;
+        } catch (err) {
+          console.error('Error processing image:', err);
+          return null;
+        }
+      }).filter((img: any) => img !== null),
       createdAt: product.createdAt,
     };
 
