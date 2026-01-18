@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/backend/db';
-import Category from '@/backend/models/category';
+
+const connectDB = require('@/backend/db');
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    
+    // Ensure model is registered
+    const Category = require('@/backend/models/category');
+    
     const categories = await Category.find();
     
     return NextResponse.json({
@@ -14,7 +18,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('❌ Error fetching categories:', error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }
@@ -23,16 +27,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { categoryName } = await req.json();
+    
+    // Ensure model is registered
+    const Category = require('@/backend/models/category');
+    
+    const { name } = await req.json();
 
-    if (!categoryName) {
+    if (!name) {
       return NextResponse.json(
         { success: false, message: 'Category name is required' },
         { status: 400 }
       );
     }
 
-    const category = new Category({ categoryName });
+    const category = new Category({ name });
     await category.save();
 
     return NextResponse.json(
@@ -42,7 +50,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('❌ Error adding category:', error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }

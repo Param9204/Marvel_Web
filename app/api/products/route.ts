@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/backend/db';
-import Product from '@/backend/models/product';
+
+const connectDB = require('@/backend/db');
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+    
+    // Ensure models are registered in correct order
+    const Category = require('@/backend/models/category');
+    const Product = require('@/backend/models/product');
+    
     const products = await Product.find()
       .populate('category')
       .sort({ createdAt: -1 });
@@ -16,7 +21,6 @@ export async function GET(req: NextRequest) {
       category: p.category,
       marvelCategory: p.marvelCategory,
       description: p.description,
-      features: p.features,
       status: p.status,
       images: p.images.map((img: any) =>
         `data:${img.contentType};base64,${img.data.toString('base64')}`
@@ -31,7 +35,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('❌ Error fetching products:', error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }
@@ -40,6 +44,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
+    
+    // Ensure models are registered in correct order
+    const Category = require('@/backend/models/category');
+    const Product = require('@/backend/models/product');
+    
     const formData = await req.formData();
 
     const productName = formData.get('productName') as string;
@@ -76,6 +85,9 @@ export async function POST(req: NextRequest) {
       status: status || 'Active',
     });
     await product.save();
+    
+    // Populate category before returning
+    await product.populate('category');
 
     return NextResponse.json(
       { success: true, product },
@@ -84,7 +96,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('❌ Error adding product:', error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || 'Internal Server Error' },
       { status: 500 }
     );
   }
