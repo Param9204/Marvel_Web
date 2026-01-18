@@ -1,6 +1,17 @@
 import connectDB from '@/backend/db';
 import { NextRequest, NextResponse } from 'next/server';
 
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(req: NextRequest) {
   try {
     console.log('🔵 Location API GET - Starting...');
@@ -78,21 +89,31 @@ export async function GET(req: NextRequest) {
     }));
 
     console.log('✅ Returning enriched location data');
-    return NextResponse.json(enrichedData);
+    return NextResponse.json(enrichedData, { headers: corsHeaders });
   } catch (error: any) {
     console.error('❌ Error fetching location data:', error.message);
     console.error('Stack:', error.stack);
     // Return empty array instead of error to prevent 500
-    return NextResponse.json([]);
+    return NextResponse.json([], { headers: corsHeaders });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('🔵 Location API POST - Receiving visitor data...');
+    
     await connectDB();
+    console.log('✅ DB Connected');
+    
     const Visitor = require('@/backend/models/visitor');
+    console.log('✅ Visitor model loaded');
 
     const body = await req.json();
+    console.log('📦 Received data:', { 
+      country: body.country, 
+      city: body.city,
+      deviceType: body.deviceType 
+    });
 
     // Detect device type from user agent
     const userAgent = req.headers.get('user-agent') || '';
@@ -103,7 +124,7 @@ export async function POST(req: NextRequest) {
     // Generate or get session ID
     const sessionId = body.sessionId || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    const visitor = await Visitor.create({
+    const visitorData = {
       lat: body.lat || null,
       lng: body.lng || null,
       country: body.country || 'Unknown',
@@ -115,17 +136,26 @@ export async function POST(req: NextRequest) {
       userAgent,
       sessionId,
       timestamp: new Date(body.timestamp || Date.now()),
-    });
+    };
+
+    console.log('💾 Saving visitor:', visitorData);
+    const visitor = await Visitor.create(visitorData);
+    console.log('✅ Visitor saved successfully:', visitor._id);
 
     return NextResponse.json({
       success: true,
-      visitor,
-    });
+      visitor: {
+        id: visitor._id,
+        country: visitor.country,
+        city: visitor.city,
+      },
+    }, { headers: corsHeaders });
   } catch (error: any) {
-    console.error('❌ Error saving visitor data:', error);
+    console.error('❌ Error saving visitor data:', error.message);
+    console.error('Stack:', error.stack);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
