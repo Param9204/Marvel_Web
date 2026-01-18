@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
     
     console.log('📦 Fetching products...');
     const products = await Product.find()
-      .select('-images') // Exclude image data for faster queries
       .populate('category')
       .sort({ createdAt: -1 });
 
@@ -40,6 +39,9 @@ export async function GET(req: NextRequest) {
       marvelCategory: p.marvelCategory,
       description: p.description,
       status: p.status,
+      images: p.images.map((img: any) =>
+        `data:${img.contentType};base64,${img.data.toString('base64')}`
+      ),
       createdAt: p.createdAt,
     }));
 
