@@ -6,9 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start",
-    "dev:backend": "nodemon backend/server.js",
-    "dev:all": "concurrently \"npm:dev\" \"npm:dev:backend\""
+    "start": "next start"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
