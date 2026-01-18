@@ -2,19 +2,36 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const connectDB = require('@/backend/db');
 
+// Add CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(req: NextRequest) {
   try {
+    console.log('🔵 GET /api/products - Starting...');
+    
     await connectDB();
+    console.log('✅ DB Connected');
     
     // Ensure models are registered in correct order
     const Category = require('@/backend/models/category');
     const Product = require('@/backend/models/product');
     
+    console.log('📦 Fetching products...');
     const products = await Product.find()
       .select('-images') // Exclude image data for faster queries
       .populate('category')
       .sort({ createdAt: -1 });
 
+    console.log(`✅ Found ${products.length} products`);
+    
     const formattedProducts = products.map((p: any) => ({
       _id: p._id,
       productName: p.productName,
@@ -29,12 +46,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       products: formattedProducts,
-    });
+    }, { headers: corsHeaders });
   } catch (error: any) {
-    console.error('❌ Error fetching products:', error);
+    console.error('❌ Error fetching products:', error.message);
+    console.error('Stack:', error.stack);
     return NextResponse.json(
-      { success: false, message: error.message || 'Internal Server Error' },
-      { status: 500 }
+      { success: false, message: error.message || 'Internal Server Error', error: error.toString() },
+      { status: 500, headers: corsHeaders }
     );
   }
 }
